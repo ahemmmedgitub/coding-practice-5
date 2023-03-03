@@ -3,6 +3,7 @@ const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
 const path = require("path");
 const app = express();
+app.use(express.json());
 
 const dbpath = path.join(__dirname, "moviesData.db");
 
@@ -116,6 +117,53 @@ app.delete("/movies/:movieId", async (request, response) => {
     `;
   await db.run(deleteQuery);
   response.send("Movie Removed");
+});
+
+// GET method
+
+app.get("/directors/", async (request, response) => {
+  const directorQuery = `
+        SELECT 
+            director_id,
+            director_name 
+        FROM 
+            director 
+        ORDER BY 
+             director_id;
+    `;
+  const queryResult = await db.all(directorQuery);
+  response.send(
+    queryResult.map((eachDirect) => {
+      return {
+        directorId: eachDirect.director_id,
+        directorName: eachDirect.director_name,
+      };
+    })
+  );
+});
+
+// GET Method
+
+app.get("/directors/:directorId/movies/", async (request, response) => {
+  const { directorId } = request.params;
+  const directorQuery = `
+        SELECT 
+            movie_name 
+        FROM 
+             movie
+                INNER JOIN ON director 
+                movie.director_id = director.director_id
+        WHERE 
+             director_id = ${directorId};
+    `;
+  const queryResult = await db.all(directorQuery);
+  response.send(
+    queryResult.map((eachDirect) => {
+      return {
+        movieName: eachDirect.movie_name,
+      };
+    })
+  );
 });
 
 module.exports = app;
